@@ -41,10 +41,10 @@ It integrates:
 
 Backend: Python, Flask, Threading (for continuous scraping)
 
-Frontend: React.js (dynamic UI for displaying incidents)
+Frontend:HTML/CSS
 
 Data Processing: Pandas, BeautifulSoup (scraping & cleaning)
 
-AI/ML: Scikit-learn, NLP (TF-IDF + Cosine Similarity)
+AI/ML: Scikit-learn,(TF-IDF + Cosine Similarity)
 
 Location Services: HTML5 Geolocation API + OpenStreetMap Reverse Geocoding
