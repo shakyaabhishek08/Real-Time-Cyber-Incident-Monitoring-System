@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI-Driven Cyber Incident Monitoring</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #1e3c72;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+    .container {
+      width: 85%;
+      margin: auto;
+      margin-top: 20px;
+    }
+    .search-box {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-box input {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .search-box button {
+      padding: 10px 20px;
+      border: none;
+      background: #1e3c72;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .search-box button:hover {
+      background: #2a5298;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #1e3c72;
+      color: white;
+    }
+    tr:hover { background: #f1f1f1; }
+    .prediction-box {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    }
+    .prediction-box h2 {
+      color: #1e3c72;
+    }
+    .prediction-result {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    a {
+      color: #2a5298;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header>AI-Driven Cyber Incident Monitoring</header>
+
+  <div class="container">
+    <!-- Search Section -->
+    <div class="search-box">
+      <input type="text" id="keyword" placeholder="Enter keyword (e.g. ransomware, phishing)">
+      <input type="text" id="location" placeholder="Your location (auto-detected)">
+      <button onclick="getPrediction()">Predict</button>
+    </div>
+
+    <!-- Prediction Section -->
+    <div class="prediction-box" id="prediction-box" style="display:none;">
+      <h2>Prediction Result</h2>
+      <div class="prediction-result" id="prediction-result"></div>
+    </div>
+
+    <!-- News Table -->
+    <h2>Latest Cybersecurity News</h2>
+    <table>
+      <tr>
+        <th>Headline</th>
+        <th>Date</th>
+        <th>Link</th>
+      </tr>
+      {% for record in records %}
+      <tr>
+        <td>{{ record['Headline'] }}</td>
+        <td>{{ record['Date'] }}</td>
+        <td><a href="{{ record['Link'] }}" target="_blank">Read More</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <script>
+    // Try to auto-detect location (city/country) via browser geolocation + reverse lookup API
+    window.onload = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          try {
+            // Free reverse geocoding API (OpenStreetMap Nominatim)
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+            const data = await res.json();
+            const city = data.address.city || data.address.town || data.address.village || "";
+            const country = data.address.country || "";
+            document.getElementById("location").value = city + (country ? ", " + country : "");
+          } catch (err) {
+            console.log("Location lookup failed", err);
+          }
+        });
+      }
+    };
+
+    // Prediction Request
+    async function getPrediction() {
+      const keyword = document.getElementById("keyword").value;
+      const location = document.getElementById("location").value;
+
+      if (!keyword) {
+        alert("Please enter a keyword!");
+        return;
+      }
+
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword, location })
+      });
+
+      const result = await response.json();
+      const box = document.getElementById("prediction-box");
+      const output = document.getElementById("prediction-result");
+
+      if (result.error) {
+        output.innerHTML = `<span style="color:red;">Error: ${result.error}</span>`;
+      } else {
+        output.innerHTML = `
+          <b>Headline:</b> ${result.Headline}<br>
+          <b>Date:</b> ${result.Date}<br>
+          <b>Relevance Score:</b> ${result["Similarity Score"].toFixed(4)}<br>
+          <b>Link:</b> <a href="${result.Link}" target="_blank">Read More</a><br><br>
+          <b>Alert:</b> ${result.Alert || "No location info provided."}
+        `;
+      }
+      box.style.display = "block";
+    }
+  </script>
+</body>
+</html>
